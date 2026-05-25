@@ -1,0 +1,61 @@
+create database genCripto;
+use genCripto;
+
+create table clientes(
+id_cliente int primary key auto_increment,
+nome varchar(100) not null,
+email varchar(100) not null,
+data_cadastro date not null);
+
+create table transacoes(
+id_transacao int primary key auto_increment,
+id_cliente int,
+codigo_ativo VARCHAR(10) NOT NULL,
+tipo_transacao VARCHAR(10) NOT NULL, 
+quantidade DECIMAL(18, 4) NOT NULL,
+preco_unitario DECIMAL(18, 2) NOT NULL,
+data_transacao DATE NOT NULL,
+FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+);
+
+CREATE VIEW vw_carteira_clientes AS
+SELECT 
+    c.id_cliente AS 'ID do Cliente',
+    c.nome AS 'Nome do Cliente',
+    t.codigo_ativo AS 'Ativo',
+    
+    -- 1. Quantidade Acumulada
+    SUM(t.quantidade) AS 'Quantidade Acumulada',
+    
+    -- 2. Total de Ativos (Valor total investido/pago)
+    SUM(t.quantidade * t.preco_unitario) AS 'Total de Ativos',
+    
+    -- 3. Preço Médio Pago
+    SUM(t.quantidade * t.preco_unitario) / SUM(t.quantidade) AS 'Preço Médio Pago'
+FROM clientes c
+INNER JOIN transacoes t ON c.id_cliente = t.id_cliente
+GROUP BY 
+    c.id_cliente, 
+    c.nome,
+    t.codigo_ativo;
+    
+    select * from vw_carteira_clientes;
+
+CREATE VIEW vw_resumo AS
+SELECT 
+    -- Dados da tabela transações (Mantendo a estrutura original)
+    t.id_transacao,
+    t.id_cliente,
+    t.codigo_ativo,
+    t.tipo_transacao,
+    t.quantidade,
+    t.preco_unitario,
+    t.data_transacao,
+    -- Informações consolidadas da tabela clientes
+    c.nome AS 'Nome do Cliente',
+    c.email AS 'E-mail do Cliente',
+    c.data_cadastro AS 'Data de Cadastro do Cliente'
+FROM transacoes t
+INNER JOIN clientes c ON t.id_cliente = c.id_cliente;
+
+select * from vw_resumo;
